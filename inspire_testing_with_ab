@@ -45,11 +45,11 @@ echo "Maximum 10 seconds to get the first bytes of the service metadata with 10 
 checkTTFB "/geoserver/ows?service=wfs&version=2.0.0&request=GetCapabilities" 10 10000
 echo ""
 echo "Maximum 30 seconds to get the first bytes of a full dataseries with 10 concurrent requests"
-checkTTFB "/geoserver/ows?SERVICE=WFS&REQUEST=GETFEATURES&TYPENAME=$TYPENAME&OUTPUTFORMAT=shape-zip" 10 30000
+checkTTFB "/geoserver/ows?service=WFS&request=GetFeature&typename=$TYPENAME&outputformat=shape-zip" 10 30000
 echo ""
 
 echo "Minimum 512kb/s transfer rate to get a full dataseries with 10 concurrent requests"
-checkTransferRate "/geoserver/ows?SERVICE=WFS&REQUEST=GETFEATURES&TYPENAME=$TYPENAME&OUTPUTFORMAT=shape-zip" 10 512
+checkTransferRate "/geoserver/ows?service=WFS&request=GetFeature&typename=$TYPENAME&OUTPUTFORMAT=shape-zip" 10 512
 echo ""
 
 echo "Maximum 30 seconds to get the first bytes of a single feature with 10 concurrent requests"
