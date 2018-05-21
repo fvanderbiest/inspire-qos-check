@@ -3,6 +3,7 @@
 BASEURL=https://lb.lb-http.geograndest.caas.camptocamp.com
 NUMBER_OF_SAMPLES=100
 TYPENAME=geor:public_layer
+RASTERLAYER=cigal:CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48
 
 checkTTFB() {
     local path=$1
@@ -80,7 +81,6 @@ echo "[PERF] Maximum 30 seconds to get the first bytes of a single feature with 
 checkTTFB "/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typename=$TYPENAME&count=1" 10 30000
 echo ""
 
-# FIXME: vector testing should rather rely on 500 features/seconds limit
 echo "[CAPACITY] Minimum 512kb/s transfer rate to get a single feature with 10 concurrent requests"
 checkTransferRate "/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typename=$TYPENAME&count=1" 10 512
 echo ""
@@ -96,6 +96,35 @@ echo ""
 echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
 checkThroughput "/geoserver/ows?service=WFS&request=GetFeature&typename=$TYPENAME&OUTPUTFORMAT=shape-zip" 10
 echo ""
+
+
+echo ""
+echo "Testing RASTER DOWNLOAD service"
+echo ""
+
+
+#~ For the Get Spatial Data Set operation and for the Get Spatial Object operation, and for a
+#~ query consisting exclusively of a bounding box, the response time for sending the initial response shall
+#~ be maximum 30 seconds in normal situation
+echo "[PERF] Maximum 30 seconds to get the first bytes of a bbox query with 10 concurrent requests"
+checkTTFB "/geoserver/ows?service=WCS&version=2.0.1&request=GetCoverage&coverageId=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&format=image/tiff&subset=N(1985000,1986000)&subset=E(7140000,7141000)" 10 30000
+echo ""
+
+#~ then, and still in normal situation, the download service
+#~ shall maintain a sustained response greater than 0,5 Megabytes per second or greater than 500
+#~ Spatial Objects per second.
+echo "[CAPACITY] Minimum 512kb/s transfer rate to get a bbox query with 10 concurrent requests"
+checkTransferRate "/geoserver/ows?service=WCS&version=2.0.1&request=GetCoverage&coverageId=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&format=image/tiff&subset=N(1985000,1986000)&subset=E(7140000,7141000)" 10 512
+echo ""
+
+#~ For the Describe Spatial Data Set operation and for the Describe Spatial Object Type
+#~ operation, the response time for sending the initial response shall be maximum 10 seconds in normal
+#~ situation
+echo "[PERF] Maximum 10 seconds to get the first bytes of a describe coverage query with 10 concurrent requests"
+checkTTFB "/geoserver/wcs?service=WCS&version=2.0.1&request=describecoverage&coverageid=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48" 10 10000
+echo ""
+
+
 
 echo ""
 echo "Testing VIEW service"
