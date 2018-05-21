@@ -11,14 +11,8 @@ checkTTFB() {
     local maximum_time_ms=$3
     echo "Checking $BASEURL$path"
     local ms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -f 1 -d ' ' | rev`
-    local s=`echo "scale=3;$ms/1000" | bc`
-
-    if [ $ms -gt $maximum_time_ms ]
-    then
-        echo -e "\033[01;31m[NOK]\033[00m ($s sec)"
-    else
-        echo -e "\033[1;36m[OK]\033[00m ($s sec)"
-    fi 
+    # local s=`echo "scale=3;$ms/1000" | bc`
+    generateReport $ms "gt" $maximum_time_ms "msec"
 }
 
 checkTransferRate() {
@@ -28,12 +22,7 @@ checkTransferRate() {
     echo "Checking $BASEURL$path"
     local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
     local kbsint=`echo $kbs | cut -f 1 -d '.'`
-    if [ $kbsint -lt $minimum_transfer_rate_kb ]
-    then
-        echo -e "\033[01;31m[NOK]\033[00m ($kbs Kbytes/sec)"
-    else
-        echo -e "\033[1;36m[OK]\033[00m ($kbs Kbytes/sec)"
-    fi 
+    generateReport $kbsint "lt" $minimum_transfer_rate_kb "Kbytes/sec"
 }
 
 
@@ -45,12 +34,7 @@ checkFeatureTransferRate() {
     echo "Checking $BASEURL$path"
     local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
     local fps=`echo "1000*$number_of_features_returned_by_query/$maxms" | bc`
-    if [ $fps -lt $minimum_feature_transfer_rate ]
-    then
-        echo -e "\033[01;31m[NOK]\033[00m ($fps features/sec)"
-    else
-        echo -e "\033[1;36m[OK]\033[00m ($fps features/sec)"
-    fi
+    generateReport $fps "lt" $minimum_feature_transfer_rate "features/sec"
 }
 
 
@@ -60,11 +44,15 @@ checkThroughput() {
     echo "Checking $BASEURL$path"
     local rps=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Requests | rev | cut -d ' ' -f 3 | rev`
     local rpsint=`echo $rps | cut -f 1 -d '.'`
-    if [ $rpsint -lt $concurrency ]
+    generateReport $rpsint "lt" $concurrency "requests served per second"
+}
+
+generateReport() {
+    if [ $1 -$2 $3 ]
     then
-        echo -e "\033[01;31m[NOK]\033[00m ($rps requests served per second)"
+        echo -e "\033[01;31m[NOK]\033[00m ($1 $4)"
     else
-        echo -e "\033[1;36m[OK]\033[00m ($rps requests served per second)"
+        echo -e "\033[1;36m[OK]\033[00m ($1 $4)"
     fi
 }
 
