@@ -2,7 +2,6 @@
 
 # TODO: 
 # * verbosity adjustement with -v -vv -vvv
-# * check 200 OK + expected response mime type
 
 BASEURL="https://lb.lb-http.geograndest.caas.camptocamp.com"
 WMS_SERVICE_PATH="geoserver/wms"
@@ -71,20 +70,16 @@ generateReport() {
 }
 
 checkExpectedType() {
-    local u=$1
-    echo "Checking $u"
+    local url=$1
+    echo "Checking $url"
     local expectedContentType=$2
-    local httpcode=`curl --write-out "%{http_code}\n" --silent --output /dev/null "$u"`
+    local httpcode=`curl --write-out "%{http_code}\n" --silent --output /dev/null "$url"`
     if [ "$httpcode" != "200" ]; then
         echo "Oops, the request does not seem correct (HTTP $httpcode). Please double check above URL."
-    #else
-        #echo "HTTP 200 OK"
     fi
-    local type=`curl --write-out "%{content_type}\n" --silent --output /dev/null "$u"`
+    local type=`curl --write-out "%{content_type}\n" --silent --output /dev/null "$url"`
     if [ "$type" != "$expectedContentType" ]; then
         echo "Oops, the request does not seem correct (Content-Type $type does not match expected $expectedContentType). Please double check above URL."
-    #else
-        #echo "Content-Type $type OK"
     fi
 }
 
