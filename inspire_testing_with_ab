@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# TODO: 
+# * verbosity adjustement with -v -vv -vvv
+# * check 200 OK + expected response mime type
+
 BASEURL="https://lb.lb-http.geograndest.caas.camptocamp.com"
 WMS_SERVICE_PATH="/geoserver/wms"
 WFS_SERVICE_PATH="/geoserver/wfs"
