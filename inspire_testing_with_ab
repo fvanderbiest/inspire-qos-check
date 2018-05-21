@@ -2,6 +2,8 @@
 
 # TODO: 
 # * verbosity adjustement with -v -vv -vvv
+# * docker image
+# * README
 
 BASEURL="https://lb.lb-http.geograndest.caas.camptocamp.com"
 WMS_SERVICE_PATH="geoserver/wms"
@@ -22,19 +24,19 @@ WCS_SUBSET2="N(7240000,7241000)"
 
 
 checkTTFB() {
-    local path=$1
+    local url=$1
     local concurrency=$2
     local maximum_time_ms=$3
-    local ms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Processing | rev | cut -f 1 -d ' ' | rev`
+    local ms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$url" | grep Processing | rev | cut -f 1 -d ' ' | rev`
     # local s=`echo "scale=3;$ms/1000" | bc`
     generateReport $ms "gt" $maximum_time_ms "msec"
 }
 
 checkTransferRate() {
-    local path=$1
+    local url=$1
     local concurrency=$2
     local minimum_transfer_rate_kb=$3
-    local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
+    local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$url" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
     # dividing by concurrency level to get an idea of how fast one client gets his file:
     local kbsint=`echo "$kbs/$concurrency" | bc`
     generateReport $kbsint "lt" $minimum_transfer_rate_kb "Kbytes/sec"
@@ -42,20 +44,20 @@ checkTransferRate() {
 
 
 checkFeatureTransferRate() {
-    local path=$1
+    local url=$1
     local concurrency=$2
     local minimum_feature_transfer_rate=$3 # eg 500 features/sec
     local number_of_features_returned_by_query=$4
-    local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
+    local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$url" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
     local fps=`echo "1000*$number_of_features_returned_by_query/$maxms" | bc`
     generateReport $fps "lt" $minimum_feature_transfer_rate "features/sec"
 }
 
 
 checkThroughput() {
-    local path=$1
+    local url=$1
     local concurrency=$2
-    local rps=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Requests | rev | cut -d ' ' -f 3 | rev`
+    local rps=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$url" | grep Requests | rev | cut -d ' ' -f 3 | rev`
     local rpsint=`echo $rps | cut -f 1 -d '.'`
     generateReport $rpsint "lt" $concurrency "requests served per second"
 }
@@ -188,10 +190,4 @@ echo "[PERF] Maximum 10 seconds to get the first bytes of a describe coverage qu
 url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=$WCS_COVERAGEID"
 checkExpectedType $url "application/xml;charset=utf-8"
 checkTTFB $url 10 10000
-echo ""
-
-echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
-url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2"
-checkExpectedType $url "image/tiff"
-checkThroughput $url 10
 echo ""
