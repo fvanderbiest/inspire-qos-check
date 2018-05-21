@@ -71,75 +71,81 @@ checkThroughput() {
 namespace=`echo $VECTORLAYER | cut -d ':' -f 1`
 layername=`echo $VECTORLAYER | cut -d ':' -f 2`
 
-echo "Testing DOWNLOAD services"
-echo ""
-echo "[PERF] Maximum 10 seconds to get the first bytes of the WFS service metadata with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=wfs&version=2.0.0&request=GetCapabilities" 10 10000
-echo ""
-
-echo "[PERF] Maximum 10 seconds to get the first bytes of the WCS service metadata with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=wcs&version=2.0.0&request=GetCapabilities" 10 10000
-echo ""
 
 echo ""
 echo "Testing VECTOR DOWNLOAD service"
 echo ""
 
+echo ""
+echo "[PERF] Maximum 10 seconds to get the first bytes of the WFS service metadata with 10 concurrent requests"
+checkTTFB "/geoserver/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
+echo ""
+
 echo "[PERF] Maximum 30 seconds to get the first bytes of a full dataseries with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&outputformat=shape-zip" 10 30000
+checkTTFB "/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 30000
 echo ""
 
 echo "[CAPACITY] Minimum 500 features/seconds to get a full dataseries with 10 concurrent requests"
-checkFeatureTransferRate "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 500 33
+checkFeatureTransferRate "/geoserver/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 500 33
 echo ""
 
 echo "[PERF] Maximum 30 seconds to get the first bytes of a single feature with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typename=$VECTORLAYER&count=1" 10 30000
+checkTTFB "/geoserver/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&count=1" 10 30000
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe dataseries query with 10 concurrent requests"
-checkTTFB "/geoserver/$namespace/$layername/ows?service=WFS&request=GetCapabilities" 10 10000
+checkTTFB "/geoserver/$namespace/$layername/ows?SERVICE=WFS&REQUEST=GetCapabilities" 10 10000
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe featuretype query with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=WFS&version=2.0.0&request=DescribeFeatureType&typename=$VECTORLAYER" 10 10000
+checkTTFB "/geoserver/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=$VECTORLAYER" 10 10000
 echo ""
 
 echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
-checkThroughput "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10
+checkThroughput "/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10
 echo ""
+
 
 
 echo ""
 echo "Testing RASTER DOWNLOAD service"
 echo ""
 
+echo ""
+echo "[PERF] Maximum 10 seconds to get the first bytes of the WCS service metadata with 10 concurrent requests"
+checkTTFB "/geoserver/ows?SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
+echo ""
 
 #~ For the Get Spatial Data Set operation and for the Get Spatial Object operation, and for a
 #~ query consisting exclusively of a bounding box, the response time for sending the initial response shall
 #~ be maximum 30 seconds in normal situation
 echo "[PERF] Maximum 30 seconds to get the first bytes of a bbox query with 10 concurrent requests"
-checkTTFB "/geoserver/ows?service=WCS&version=2.0.1&request=GetCoverage&coverageId=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&format=image/tiff&subset=N(1985000,1986000)&subset=E(7140000,7141000)" 10 30000
+checkTTFB "/geoserver/ows?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&FORMAT=image/tiff&SUBSET=N(1985000,1986000)&SUBSET=E(7140000,7141000)" 10 30000
 echo ""
 
 #~ then, and still in normal situation, the download service
 #~ shall maintain a sustained response greater than 0,5 Megabytes per second or greater than 500
 #~ Spatial Objects per second.
 echo "[CAPACITY] Minimum 512kb/s transfer rate to get a bbox query with 10 concurrent requests"
-checkTransferRate "/geoserver/ows?service=WCS&version=2.0.1&request=GetCoverage&coverageId=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&format=image/tiff&subset=N(1985000,1986000)&subset=E(7140000,7141000)" 10 512
+checkTransferRate "/geoserver/ows?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48&FORMAT=image/tiff&SUBSET=N(1985000,1986000)&SUBSET=E(7140000,7141000)" 10 512
 echo ""
 
 #~ For the Describe Spatial Data Set operation and for the Describe Spatial Object Type
 #~ operation, the response time for sending the initial response shall be maximum 10 seconds in normal
 #~ situation
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe coverage query with 10 concurrent requests"
-checkTTFB "/geoserver/wcs?service=WCS&version=2.0.1&request=describecoverage&coverageid=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48" 10 10000
+checkTTFB "/geoserver/wcs?SERVICE=WCS&VERSION=2.0.1&REQUEST=describecoverage&COVERAGEID=cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48" 10 10000
 echo ""
 
 
 
 echo ""
 echo "Testing VIEW service"
+echo ""
+
+echo ""
+echo "[PERF] Maximum 10 seconds to get the first bytes of the WMS service metadata with 20 concurrent requests"
+checkTTFB "/geoserver/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" 20 10000
 echo ""
 
 echo "[PERF] Maximum 5 seconds to get the first bytes of a 800x600 8 bit bitmap WMS GetMap with 20 concurrent requests"
