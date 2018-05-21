@@ -5,9 +5,9 @@
 # * check 200 OK + expected response mime type
 
 BASEURL="https://lb.lb-http.geograndest.caas.camptocamp.com"
-WMS_SERVICE_PATH="/geoserver/wms"
-WFS_SERVICE_PATH="/geoserver/wfs"
-WCS_SERVICE_PATH="/geoserver/wcs"
+WMS_SERVICE_PATH="geoserver/wms"
+WFS_SERVICE_PATH="geoserver/wfs"
+WCS_SERVICE_PATH="geoserver/wcs"
 
 NUMBER_OF_SAMPLES=100
 
@@ -15,7 +15,7 @@ VECTORLAYER="geor:public_layer"
 FEATURE_COUNT=33
 
 WMS_CRS="EPSG:3857"
-WMS_BBOX="20820223,-20820223,20820223,20820223"
+WMS_BBOX="-20820223,-20820223,20820223,20820223"
 
 WCS_COVERAGEID="cigal__CIGAL_ORTHORVB_2007_ALSACE_TIFA_CC48"
 WCS_SUBSET1="E(2035000,2036000)"
@@ -26,8 +26,7 @@ checkTTFB() {
     local path=$1
     local concurrency=$2
     local maximum_time_ms=$3
-    echo "Checking $BASEURL$path"
-    local ms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -f 1 -d ' ' | rev`
+    local ms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Processing | rev | cut -f 1 -d ' ' | rev`
     # local s=`echo "scale=3;$ms/1000" | bc`
     generateReport $ms "gt" $maximum_time_ms "msec"
 }
@@ -36,8 +35,7 @@ checkTransferRate() {
     local path=$1
     local concurrency=$2
     local minimum_transfer_rate_kb=$3
-    echo "Checking $BASEURL$path"
-    local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
+    local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
     # dividing by concurrency level to get an idea of how fast one client gets his file:
     local kbsint=`echo "$kbs/$concurrency" | bc`
     generateReport $kbsint "lt" $minimum_transfer_rate_kb "Kbytes/sec"
@@ -49,8 +47,7 @@ checkFeatureTransferRate() {
     local concurrency=$2
     local minimum_feature_transfer_rate=$3 # eg 500 features/sec
     local number_of_features_returned_by_query=$4
-    echo "Checking $BASEURL$path"
-    local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
+    local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
     local fps=`echo "1000*$number_of_features_returned_by_query/$maxms" | bc`
     generateReport $fps "lt" $minimum_feature_transfer_rate "features/sec"
 }
@@ -59,8 +56,7 @@ checkFeatureTransferRate() {
 checkThroughput() {
     local path=$1
     local concurrency=$2
-    echo "Checking $BASEURL$path"
-    local rps=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Requests | rev | cut -d ' ' -f 3 | rev`
+    local rps=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL/$path" | grep Requests | rev | cut -d ' ' -f 3 | rev`
     local rpsint=`echo $rps | cut -f 1 -d '.'`
     generateReport $rpsint "lt" $concurrency "requests served per second"
 }
@@ -74,6 +70,23 @@ generateReport() {
     fi
 }
 
+checkExpectedType() {
+    local u=$1
+    echo "Checking $u"
+    local expectedContentType=$2
+    local httpcode=`curl --write-out "%{http_code}\n" --silent --output /dev/null "$u"`
+    if [ "$httpcode" != "200" ]; then
+        echo "Oops, the request does not seem correct (HTTP $httpcode). Please double check above URL."
+    #else
+        #echo "HTTP 200 OK"
+    fi
+    local type=`curl --write-out "%{content_type}\n" --silent --output /dev/null "$u"`
+    if [ "$type" != "$expectedContentType" ]; then
+        echo "Oops, the request does not seem correct (Content-Type $type does not match expected $expectedContentType). Please double check above URL."
+    #else
+        #echo "Content-Type $type OK"
+    fi
+}
 
 
 echo ""
@@ -82,15 +95,21 @@ echo "===================="
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WMS service metadata with 20 concurrent requests"
-checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" 20 10000
+url="$BASEURL/$WMS_SERVICE_PATH?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
+checkExpectedType $url "text/xml;charset=utf-8"
+checkTTFB $url 20 10000
 echo ""
 
 echo "[PERF] Maximum 5 seconds to get the first bytes of a 800x600 8 bit bitmap WMS GetMap with 20 concurrent requests"
-checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20 5000
+url="$BASEURL/$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600"
+checkExpectedType $url "image/tiff8"
+checkTTFB $url 20 5000
 echo ""
 
 echo "[CAPACITY] Minimum 20 simultaneous service requests served per second"
-checkThroughput "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20
+url="$BASEURL/$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600"
+checkExpectedType $url "image/tiff8"
+checkThroughput $url 20
 echo ""
 
 
@@ -101,27 +120,39 @@ echo "==============================="
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WFS service metadata with 10 concurrent requests"
-checkTTFB "$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities"
+checkExpectedType $url "application/xml;charset=utf-8"
+checkTTFB $url 10 10000
 echo ""
 
 echo "[PERF] Maximum 30 seconds to get the first bytes of a full dataseries with 10 concurrent requests"
-checkTTFB "$WFS_SERVICE_PATH?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 30000
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip"
+checkExpectedType $url "application/zip"
+checkTTFB $url 10 30000
 echo ""
 
 echo "[CAPACITY] Minimum 500 features/seconds to get a full dataseries with 10 concurrent requests"
-checkFeatureTransferRate "$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 500 $FEATURE_COUNT
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip"
+checkExpectedType $url "application/zip"
+checkFeatureTransferRate $url 10 500 $FEATURE_COUNT
 echo ""
 
 echo "[PERF] Maximum 30 seconds to get the first bytes of a single feature with 10 concurrent requests"
-checkTTFB "$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&count=1" 10 30000
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&count=1"
+checkExpectedType $url "application/gml+xml; version=3.2"
+checkTTFB $url 10 30000
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe featuretype query with 10 concurrent requests"
-checkTTFB "$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=$VECTORLAYER" 10 10000
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=$VECTORLAYER"
+checkExpectedType $url "application/gml+xml; version=3.2"
+checkTTFB $url 10 10000
 echo ""
 
 echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
-checkThroughput "$WFS_SERVICE_PATH?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10
+url="$BASEURL/$WFS_SERVICE_PATH?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=$VECTORLAYER&OUTPUTFORMAT=shape-zip"
+checkExpectedType $url "application/zip"
+checkThroughput $url 10
 echo ""
 
 
@@ -132,30 +163,40 @@ echo "==============================="
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WCS service metadata with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities" 10 10000
+url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities"
+checkExpectedType $url "application/xml;charset=utf-8"
+checkTTFB $url 10 10000
 echo ""
 
 #~ For the Get Spatial Data Set operation and for the Get Spatial Object operation, and for a
 #~ query consisting exclusively of a bounding box, the response time for sending the initial response shall
 #~ be maximum 30 seconds in normal situation
 echo "[PERF] Maximum 30 seconds to get the first bytes of a bbox query with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 30000
+url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2"
+checkExpectedType $url "image/tiff"
+checkTTFB $url 10 30000
 echo ""
 
 #~ then, and still in normal situation, the download service
 #~ shall maintain a sustained response greater than 0,5 Megabytes per second or greater than 500
 #~ Spatial Objects per second.
 echo "[CAPACITY] Minimum 512kb/s transfer rate to get a bbox query with 10 concurrent requests"
-checkTransferRate "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 512
+url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2"
+checkExpectedType $url "image/tiff"
+checkTransferRate $url 10 512
 echo ""
 
 #~ For the Describe Spatial Data Set operation and for the Describe Spatial Object Type
 #~ operation, the response time for sending the initial response shall be maximum 10 seconds in normal
 #~ situation
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe coverage query with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=$WCS_COVERAGEID" 10 10000
+url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=$WCS_COVERAGEID"
+checkExpectedType $url "application/xml;charset=utf-8"
+checkTTFB $url 10 10000
 echo ""
 
 echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
-checkThroughput "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10
+url="$BASEURL/$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2"
+checkExpectedType $url "image/tiff"
+checkThroughput $url 10
 echo ""
