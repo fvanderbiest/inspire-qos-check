@@ -38,7 +38,8 @@ checkTransferRate() {
     local minimum_transfer_rate_kb=$3
     echo "Checking $BASEURL$path"
     local kbs=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Transfer | rev | cut -d ' ' -f 3 | rev` # [Kbytes/sec] received
-    local kbsint=`echo $kbs | cut -f 1 -d '.'`
+    # dividing by concurrency level to get an idea of how fast one client gets his file:
+    local kbsint=`echo "$kbs/$concurrency" | bc`
     generateReport $kbsint "lt" $minimum_transfer_rate_kb "Kbytes/sec"
 }
 
