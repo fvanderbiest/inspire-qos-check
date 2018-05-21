@@ -132,7 +132,7 @@ echo "==============================="
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WCS service metadata with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
+checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities" 10 10000
 echo ""
 
 #~ For the Get Spatial Data Set operation and for the Get Spatial Object operation, and for a
