@@ -75,8 +75,8 @@ layername=`echo $VECTORLAYER | cut -d ':' -f 2`
 echo ""
 echo "Testing VECTOR DOWNLOAD service"
 echo ""
-
 echo ""
+
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WFS service metadata with 10 concurrent requests"
 checkTTFB "/geoserver/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
 echo ""
@@ -110,8 +110,8 @@ echo ""
 echo ""
 echo "Testing RASTER DOWNLOAD service"
 echo ""
-
 echo ""
+
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WCS service metadata with 10 concurrent requests"
 checkTTFB "/geoserver/ows?SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCapabilities" 10 10000
 echo ""
@@ -142,8 +142,8 @@ echo ""
 echo ""
 echo "Testing VIEW service"
 echo ""
-
 echo ""
+
 echo "[PERF] Maximum 10 seconds to get the first bytes of the WMS service metadata with 20 concurrent requests"
 checkTTFB "/geoserver/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" 20 10000
 echo ""
