@@ -37,6 +37,23 @@ checkTransferRate() {
 }
 
 
+checkFeatureTransferRate() {
+    local path=$1
+    local concurrency=$2
+    local minimum_feature_transfer_rate=$3 # 500 features/sec
+    local number_of_features_returned_by_query=$4
+    echo "Checking $BASEURL$path"
+    local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
+    local fps=`echo "1000*$number_of_features_returned_by_query/$maxms" | bc`
+    if [ $fps -lt $minimum_feature_transfer_rate ]
+    then
+        echo -e "\033[01;31m[NOK]\033[00m ($fps features/sec)"
+    else
+        echo -e "\033[1;36m[OK]\033[00m ($fps features/sec)"
+    fi
+}
+
+
 checkThroughput() {
     local path=$1
     local concurrency=$2
@@ -72,17 +89,12 @@ echo "[PERF] Maximum 30 seconds to get the first bytes of a full dataseries with
 checkTTFB "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&outputformat=shape-zip" 10 30000
 echo ""
 
-# FIXME: vector testing should rather rely on 500 features/seconds limit
-echo "[CAPACITY] Minimum 512kb/s transfer rate to get a full dataseries with 10 concurrent requests"
-checkTransferRate "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 512
+echo "[CAPACITY] Minimum 500 features/seconds to get a full dataseries with 10 concurrent requests"
+checkFeatureTransferRate "/geoserver/ows?service=WFS&request=GetFeature&typename=$VECTORLAYER&OUTPUTFORMAT=shape-zip" 10 500 33
 echo ""
 
 echo "[PERF] Maximum 30 seconds to get the first bytes of a single feature with 10 concurrent requests"
 checkTTFB "/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typename=$VECTORLAYER&count=1" 10 30000
-echo ""
-
-echo "[CAPACITY] Minimum 512kb/s transfer rate to get a single feature with 10 concurrent requests"
-checkTransferRate "/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typename=$VECTORLAYER&count=1" 10 512
 echo ""
 
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe dataseries query with 10 concurrent requests"
