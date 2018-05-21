@@ -47,7 +47,7 @@ checkTransferRate() {
 checkFeatureTransferRate() {
     local path=$1
     local concurrency=$2
-    local minimum_feature_transfer_rate=$3 # 500 features/sec
+    local minimum_feature_transfer_rate=$3 # eg 500 features/sec
     local number_of_features_returned_by_query=$4
     echo "Checking $BASEURL$path"
     local maxms=`ab -n $NUMBER_OF_SAMPLES -c $concurrency "$BASEURL$path" | grep Processing | rev | cut -d ' ' -f 1 | rev` # Processing ms
@@ -73,6 +73,26 @@ generateReport() {
         echo -e "\033[1;36m[OK]\033[00m ($1 $4)"
     fi
 }
+
+
+
+echo ""
+echo "Testing VIEW service"
+echo "===================="
+echo ""
+
+echo "[PERF] Maximum 10 seconds to get the first bytes of the WMS service metadata with 20 concurrent requests"
+checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" 20 10000
+echo ""
+
+echo "[PERF] Maximum 5 seconds to get the first bytes of a 800x600 8 bit bitmap WMS GetMap with 20 concurrent requests"
+checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20 5000
+echo ""
+
+echo "[CAPACITY] Minimum 20 simultaneous service requests served per second"
+checkThroughput "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20
+echo ""
+
 
 
 echo ""
@@ -119,38 +139,23 @@ echo ""
 #~ query consisting exclusively of a bounding box, the response time for sending the initial response shall
 #~ be maximum 30 seconds in normal situation
 echo "[PERF] Maximum 30 seconds to get the first bytes of a bbox query with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&WCS_COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 30000
+checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 30000
 echo ""
 
 #~ then, and still in normal situation, the download service
 #~ shall maintain a sustained response greater than 0,5 Megabytes per second or greater than 500
 #~ Spatial Objects per second.
 echo "[CAPACITY] Minimum 512kb/s transfer rate to get a bbox query with 10 concurrent requests"
-checkTransferRate "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&WCS_COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 512
+checkTransferRate "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10 512
 echo ""
 
 #~ For the Describe Spatial Data Set operation and for the Describe Spatial Object Type
 #~ operation, the response time for sending the initial response shall be maximum 10 seconds in normal
 #~ situation
 echo "[PERF] Maximum 10 seconds to get the first bytes of a describe coverage query with 10 concurrent requests"
-checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&WCS_COVERAGEID=$WCS_COVERAGEID" 10 10000
+checkTTFB "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=$WCS_COVERAGEID" 10 10000
 echo ""
 
-
-
-echo ""
-echo "Testing VIEW service"
-echo "===================="
-echo ""
-
-echo "[PERF] Maximum 10 seconds to get the first bytes of the WMS service metadata with 20 concurrent requests"
-checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" 20 10000
-echo ""
-
-echo "[PERF] Maximum 5 seconds to get the first bytes of a 800x600 8 bit bitmap WMS GetMap with 20 concurrent requests"
-checkTTFB "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20 5000
-echo ""
-
-echo "[CAPACITY] Minimum 20 simultaneous service requests served per second"
-checkThroughput "$WMS_SERVICE_PATH?SERVICE=WMS&LAYERS=$VECTORLAYER&FORMAT=image/tiff8&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=$WMS_CRS&BBOX=$WMS_BBOX&WIDTH=800&HEIGHT=600" 20
+echo "[CAPACITY] Minimum 10 simultaneous service requests served per second"
+checkThroughput "$WCS_SERVICE_PATH?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=$WCS_COVERAGEID&FORMAT=image/tiff&SUBSET=$WCS_SUBSET1&SUBSET=$WCS_SUBSET2" 10
 echo ""
