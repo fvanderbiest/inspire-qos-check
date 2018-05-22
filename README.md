@@ -12,7 +12,7 @@ Create a copy of the `geograndest.env` file and run your own tests with:
 docker run --env-file yours.env --rm fvanderbiest/inspire-qos-check
 ```
 
-Less intuitive without docker:
+Less intuitive without docker (requires [ab](https://httpd.apache.org/docs/2.4/programs/ab.html) & [curl](https://curl.haxx.se/)):
 ```
 (export $(cat yours.env | grep -v ^# | xargs) && bash 'inspire-qos-check')
 ```
