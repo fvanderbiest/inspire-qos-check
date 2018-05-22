@@ -11,3 +11,6 @@ Create a copy of the `geograndest.env` file and run your own tests with:
 ```
 docker run --env-file yours.env --rm fvanderbiest/inspire-qos-check
 ```
+
+It was mainly tested against GeoServer instances.  
+Checking other servers will probably require improvements. Contributions welcomed !
