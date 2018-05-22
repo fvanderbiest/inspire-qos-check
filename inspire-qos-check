@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# TODO: 
+# TODO:
 # * verbosity adjustement with -v -vv -vvv
 
 # Example required environment variables:
