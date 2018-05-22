@@ -62,13 +62,22 @@ checkThroughput() {
     generateReport $rpsint "lt" $concurrency "requests served per second"
 }
 
+echoNOK() {
+     echo -ne "\033[01;31m$1\033[00m"
+}
+
+echoOK() {
+     echo -ne "\033[1;36m$1\033[00m"
+}
+
 generateReport() {
     if [ $1 -$2 $3 ]
     then
-        echo -e "\033[01;31m[NOK]\033[00m ($1 $4)"
+        echoNOK "[NOK]"
     else
-        echo -e "\033[1;36m[OK]\033[00m ($1 $4)"
+        echoOK "[OK]"
     fi
+    echo " ($1 $4)"
 }
 
 checkExpectedType() {
@@ -77,11 +86,15 @@ checkExpectedType() {
     local expectedContentType=$2
     local httpcode=`curl --write-out "%{http_code}\n" --silent --output /dev/null "$url"`
     if [ "$httpcode" != "200" ]; then
-        echo "Oops, the request does not seem correct (HTTP $httpcode). Please double check above URL."
+        echo ""
+        echoNOK "Oops, the request does not seem correct (HTTP $httpcode). Please double check above URL."
+        echo ""
     fi
     local type=`curl --write-out "%{content_type}\n" --silent --output /dev/null "$url"`
     if [ "$type" != "$expectedContentType" ]; then
-        echo "Oops, the request does not seem correct (Content-Type $type does not match expected $expectedContentType). Please double check above URL."
+        echo ""
+        echoNOK "Oops, the request does not seem correct (Content-Type $type does not match expected $expectedContentType). Please double check above URL."
+        echo ""
     fi
 }
 
