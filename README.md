@@ -14,7 +14,7 @@ docker run --env-file yours.env --rm fvanderbiest/inspire-qos-check
 
 Less intuitive without docker:
 ```
-(export $(cat geograndest.env| grep -v ^# | xargs) && bash 'inspire-qos-check')
+(export $(cat yours.env | grep -v ^# | xargs) && bash 'inspire-qos-check')
 ```
 
 This script was mainly tested against GeoServer instances.  
