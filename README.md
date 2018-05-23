@@ -19,3 +19,5 @@ Less intuitive without docker (requires [ab](https://httpd.apache.org/docs/2.4/p
 
 This script was mainly tested against GeoServer instances.  
 Checking other servers will probably require improvements. Contributions welcomed !
+
+The initial development was sponsored by the [GeoGrandEst project](https://twitter.com/geograndest)
