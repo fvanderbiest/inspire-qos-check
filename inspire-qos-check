@@ -85,12 +85,14 @@ checkExpectedType() {
         echo ""
         echoNOK "Oops, the request does not seem correct (HTTP $httpcode). Please double check above URL."
         echo ""
+        exit 1
     fi
     local type=`curl --write-out "%{content_type}\n" --silent --output /dev/null "$url"`
     if [ "${type,,}" != "$expectedContentType" ]; then
         echo ""
         echoNOK "Oops, the request does not seem correct (Content-Type $type does not match expected $expectedContentType). Please double check above URL."
         echo ""
+        exit 1
     fi
 }
 
