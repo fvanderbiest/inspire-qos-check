@@ -7,7 +7,7 @@ This repository provides a rough estimate for a SDI to meet the INSPIRE requirem
 
 Easiest way to run it is with docker.
 
-Edit or create a copy of the [mysdi.env](mysdi.env) file and run your own tests with:
+Edit or create a copy of the [mysdi.env](https://github.com/fvanderbiest/inspire-qos-check/blob/master/mysdi.env) file and run your own tests with:
 ```
 docker run --env-file mysdi.env --rm fvanderbiest/inspire-qos-check
 ```
