@@ -1,5 +1,7 @@
 # INSPIRE Quality of Service check
 
+[![Pulls](https://img.shields.io/docker/pulls/fvanderbiest/inspire-qos-check.svg)](https://hub.docker.com/r/fvanderbiest/inspire-qos-check/)
+
 This repository provides a rough estimate for a SDI to meet the INSPIRE requirements for Quality of Service, as defined in:
  * [View Services Technical Guidance](http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.11.pdf) chapter 6
  * [Download Services Technical Guidance](http://inspire.ec.europa.eu/documents/Network_Services/Technical_Guidance_Download_Services_v3.1.pdf) chapter 8
